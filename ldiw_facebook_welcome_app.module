@@ -10,7 +10,7 @@ DEFINE('LDIW_FACEBOOK_WELCOME_APP_INTRO_HTML',
 function ldiw_facebook_welcome_app_get_facebook_page_url()
 {
 	return variable_get('ldiw_facebook_welcome_app_facebook_page_url',
-		'http://www.facebook.com/pages/FBML-Test-page/167901846562946');	//!!!
+								'http://www.facebook.com/letsdoitworld');
 	}
 
 /***************************************************************************/
@@ -128,14 +128,14 @@ function ldiw_facebook_welcome_app_start_request()
 
 	$page_id=isset($_POST['fb_sig_profile_id']) ?
 					$_POST['fb_sig_profile_id'] : $_POST['fb_sig_profile'];
-	if ($page_id != '167901846562946') {	//!!! Add LDIW page ID
+	if ($page_id != '167901846562946' && $page_id != '110496952324003') {	//!!! Make configurable
 		print '<fb:redirect url="' . htmlentities(
 				ldiw_facebook_welcome_app_get_facebook_page_url()) . '" />';
 		exit();
 		}
 
 	require_once 'lib/facebook.php';
-	$facebook=new Facebook('314582a2629fa11d6b4c3804de04aa58',
+	$facebook=new Facebook('314582a2629fa11d6b4c3804de04aa58',	//!!! Hide these from github
 						'518c1ae92ae9f5db2a89e62836f22601');
 		// This may emit some cookies/headers
 
