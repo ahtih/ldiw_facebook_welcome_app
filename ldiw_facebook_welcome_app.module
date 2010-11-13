@@ -425,13 +425,17 @@ function do_auth() {
 <?php print ldiw_facebook_welcome_app_planned_projects_html($country_code); ?>
 
 <p>
-<fb:intl>Next, let's look {how_you_can_help_us_link}
-<fb:intl-token name="how_you_can_help_us_link"><a onclick="do_auth()"><b><fb:intl desc="Content of {how_you_can_help_us_link}">how YOU can very easily help us!</fb:intl></b></a></fb:intl-token>
-</fb:intl>
+<form style="margin-top: 20px">
+<fb:tag name="input">
+	<fb:tag-attribute name="type">button</fb:tag-attribute>
+	<fb:tag-attribute name="value"><fb:intl>Start cleaning!</fb:intl></fb:tag-attribute>
+	<fb:tag-attribute name="onclick">do_auth()</fb:tag-attribute>
+	<fb:tag-attribute name="class">inputbutton request_form_submit</fb:tag-attribute>
+</fb:tag>
+</form>
 
-<p>
 <div class="disclaimer">
-<fb:intl>This will ask you for some profile information.</fb:intl>
+<fb:intl>(This will ask you for some profile information)</fb:intl>
 </div>
 </div>
 	<?php
