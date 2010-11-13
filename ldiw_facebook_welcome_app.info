@@ -1,0 +1,7 @@
+core = "6.x"
+dependencies[] = "geonames"
+dependencies[] = "ldiw_cleanup_projects_database"
+description = "Welcome app for LDIW Facebook Page"
+name = "LDIW Facebook Welcome app"
+package = "LDIW"
+version = "6.x-1.0"
