@@ -609,6 +609,30 @@ function ldiw_facebook_welcome_app_admin_settings()
 	return system_settings_form($form);
 	}
 
+/***************************************************************************/
+/***************                                            ****************/
+/*************** ldiw_facebook_welcome_app_privacy_policy() ****************/
+/***************                                            ****************/
+/***************************************************************************/
+
+function ldiw_facebook_welcome_app_privacy_policy()
+{
+	return <<<EOT
+This is the privacy policy of www.letsdoitworld.org Facebook
+Page/Application.
+
+<ul>
+<li>In order to personalize information presented to you, our Facebook
+Page/Application may ask you for access to your personal profile
+information on Facebook. You will always have an option to not
+grant such access.
+
+<li>We will not show, give, transfer, or sell that profile information
+to any other person or organization.
+</ul>
+EOT;
+	}
+
 /**
  * Implementation of hook_menu()
  */
@@ -640,6 +664,13 @@ function ldiw_facebook_welcome_app_menu()
 			'page arguments' =>
 						array('ldiw_facebook_welcome_app_admin_settings'),
 			'access arguments' => array('administer site configuration'),
+			),
+
+		// Privacy policy
+		'ldiw_facebook_welcome_app/privacy-policy.html' => array(
+			'title' => 'Privacy Policy',
+			'page callback' => 'ldiw_facebook_welcome_app_privacy_policy',
+			'access arguments' => array('access content'),
 			),
 		);
 	}
