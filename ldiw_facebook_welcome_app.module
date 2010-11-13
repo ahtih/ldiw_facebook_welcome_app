@@ -359,7 +359,7 @@ function ldiw_facebook_welcome_app_welcome()
 		<div id="ldiw_video">
 		<fb:swf swfbgcolor="ffffff" 
 			imgstyle="border-width:3px; border-color:black;" 
-			swfsrc='http://www.youtube.com/v/A5GryIDl0qY' 
+			swfsrc='http://www.youtube.com/v/A5GryIDl0qY&autoplay=1' 
 			imgsrc='http://img.youtube.com/vi/A5GryIDl0qY/0.jpg' 
 			width='317' height='252' />
 		</div>
