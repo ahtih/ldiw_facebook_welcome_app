@@ -356,11 +356,20 @@ function ldiw_facebook_welcome_app_welcome()
 		<fb:intl desc="Appears just before the video">
 		See how 250 000 people did it in Slovenia, 50 000 in Estonia, etc:
 		</fb:intl>
+		<div id="ldiw_video">
 		<fb:swf swfbgcolor="ffffff" 
 			imgstyle="border-width:3px; border-color:black;" 
 			swfsrc='http://www.youtube.com/v/A5GryIDl0qY' 
 			imgsrc='http://img.youtube.com/vi/A5GryIDl0qY/0.jpg' 
 			width='317' height='252' />
+		</div>
+		<fb:js-string var="small_ldiw_video">
+		<fb:swf swfbgcolor="ffffff" 
+			imgstyle="border-width:3px; border-color:black;" 
+			swfsrc='http://www.youtube.com/v/A5GryIDl0qY' 
+			imgsrc='http://img.youtube.com/vi/A5GryIDl0qY/0.jpg' 
+			width='159' height='126' />
+		</fb:js-string>
 		<p>
 		<fb:intl desc="Appears after general intro and video">
 		Similar large cleanups happened in Portugal, Romania, Latvia
@@ -391,6 +400,10 @@ function do_ajax() {
 function do_auth() {
 	document.getElementById('contribute').setTextValue('');
 	document.getElementById('ldiw_throbber').setTextValue('...');
+	var elem=document.getElementById('ldiw_video');
+	if (elem) {
+		elem.setInnerFBML(small_ldiw_video);
+		}
 
 	var ajax=new Ajax();
 	ajax.responseType=Ajax.FBML;
