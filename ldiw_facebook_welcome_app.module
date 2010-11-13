@@ -419,7 +419,9 @@ function ldiw_facebook_welcome_app_contribute()
 	list($facebook,$country_code,$welcome_tab_url)=
 								ldiw_facebook_welcome_app_start_request();
 
-	$result=$facebook->api_client->call_method('facebook.fql.multiquery',
+	$fql_results=array();
+	try {
+		$result=$facebook->api_client->call_method('facebook.fql.multiquery',
 			array('queries' => array(
 				'is_fan' => "SELECT page_id FROM page_fan " . 
 							"WHERE uid=me() AND page_id='$page_id'",
@@ -432,14 +434,22 @@ function ldiw_facebook_welcome_app_contribute()
 						//!!! exclude friends using page_fan table
 				)));
 
-	$fql_results=array();
-	foreach ($result as $res) {
-		$result_set=$res['fql_result_set'];
-		if (!$result_set) {
-			$result_set=array();
+		foreach ($result as $res) {
+			$result_set=$res['fql_result_set'];
+			if (!$result_set) {
+				$result_set=array();
+				}
+			$fql_results[$res['name']]=$result_set;
 			}
-		$fql_results[$res['name']]=$result_set;
-		}
+		} catch (FacebookRestClientException $e) {
+			if ($e->getCode() != 102 /* Requires user session */) {
+				//!!! Log "user did not authorise"
+				throw $e;
+				}
+			$fql_results['is_fan']=array();
+			$fql_results['friend_locations']=array();
+			$fql_results['my_location']=array();
+			}
 
 	$next_todo_list_index=1;
 	if (!$fql_results['is_fan'] && 0/*!!!*/) {
