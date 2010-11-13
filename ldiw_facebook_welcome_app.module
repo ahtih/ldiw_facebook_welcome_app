@@ -126,13 +126,11 @@ function ldiw_facebook_welcome_app_start_request()
 {
 	global $language_countries;
 
-	$welcome_tab_url=ldiw_facebook_welcome_app_get_facebook_page_url() .
-									'?v=app_' . $_POST['fb_sig_app_id'];
-
 	$page_id=isset($_POST['fb_sig_profile_id']) ?
 					$_POST['fb_sig_profile_id'] : $_POST['fb_sig_profile'];
 	if ($page_id != '167901846562946') {	//!!! Add LDIW page ID
-		print '<fb:redirect url="' . htmlentities($welcome_tab_url) . '" />';
+		print '<fb:redirect url="' . htmlentities(
+				ldiw_facebook_welcome_app_get_facebook_page_url()) . '" />';
 		exit();
 		}
 
@@ -207,7 +205,7 @@ function ldiw_facebook_welcome_app_start_request()
 		$country_code=strtoupper($_POST['fb_sig_country']);
 		}
 
-	return array($facebook,$country_code,$welcome_tab_url);
+	return array($facebook,$country_code);
 	}
 
 /***************************************************************************/
@@ -237,7 +235,7 @@ function ldiw_facebook_welcome_app_find_country_by_name($name)
 
 function ldiw_facebook_welcome_app_welcome()
 {
-	list($facebook,$country_code,$welcome_tab_url)=
+	list($facebook,$country_code)=
 								ldiw_facebook_welcome_app_start_request();
 	$php_script_url=$GLOBALS['base_url'] . '/ldiw_facebook_welcome_app/';
 	?>
@@ -380,7 +378,7 @@ function do_auth() {
 
 <fb:visible-to-connection>
 <fb:else>
-<fb:intl desc="Appears after intro+video, just before the Like button">Awesome, you say?</fb:intl>
+<fb:intl desc="Appears after intro+video, just before the Like button">What do you think about it - LIKE it?</fb:intl>
 
 <p>
 <fb:comments xid="welcome_tab" numposts="0" canpost="false" candelete="false"
@@ -416,8 +414,10 @@ function do_auth() {
 
 function ldiw_facebook_welcome_app_contribute()
 {
-	list($facebook,$country_code,$welcome_tab_url)=
+	list($facebook,$country_code)=
 								ldiw_facebook_welcome_app_start_request();
+	$welcome_tab_url=ldiw_facebook_welcome_app_get_facebook_page_url() .
+									'?v=app_' . $_POST['fb_sig_app_id'];
 
 	$fql_results=array();
 	try {
@@ -484,7 +484,7 @@ function ldiw_facebook_welcome_app_contribute()
 <div class="actionitem_box">
 <b><?php print $next_todo_list_index++; ?>.</b>&nbsp;<?php print $text; ?>
 <p>
-<fb:intl>Visit their websites and see how you can help.</fb:intl>
+<fb:intl>Believe me, you don't want to miss it! Visit their website and see how YOU can help.</fb:intl>
 </div>
 		<?php
 		}
@@ -540,7 +540,7 @@ function ldiw_facebook_welcome_app_contribute()
 		?>
 <div class="actionitem_box">
 <h2><?php print $next_todo_list_index++; ?>.&nbsp;
-<fb:intl>Contribute to the
+<fb:intl>Join the
 <a href="http://www.letsdoitworld.org/contact/international-team">international team</a>
 as a volunteer.</h2>
 <p>
