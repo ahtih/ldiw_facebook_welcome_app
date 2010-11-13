@@ -122,12 +122,17 @@ function ldiw_facebook_welcome_app_planned_projects_html($country_code)
 /******************                                       ******************/
 /***************************************************************************/
 
+function ldiw_facebook_welcome_app_context_hash()
+{
+	return crc32($_SERVER['HTTP_USER_AGENT'] . '|' .
+				$_POST['fb_sig_country'] . '|' .
+				$_POST['fb_sig_locale']);
+	}
+
 function ldiw_facebook_welcome_app_log_event($event_type,$attrs=array())
 {
 	$attrs=array_merge(array('time' => gmdate('Y-m-d H:i:s e'),
-				'context_hash' => crc32($_SERVER['HTTP_USER_AGENT'] . '|' .
-										$_POST['fb_sig_country'] . '|' .
-										$_POST['fb_sig_locale']),
+				'context_hash' => ldiw_facebook_welcome_app_context_hash(),
 				'country_code' => substr($_POST['fb_sig_country'],0,2),
 				'locale' => substr($_POST['fb_sig_locale'],0,8),
 				'event_type' => $event_type,
@@ -255,7 +260,15 @@ function ldiw_facebook_welcome_app_welcome()
 {
 	list($facebook,$country_code)=
 								ldiw_facebook_welcome_app_start_request();
-	ldiw_facebook_welcome_app_log_event('welcome');
+	$is_duplicate=db_result(db_query(
+				"SELECT count(*) FROM {ldiw_facebook_welcome_app_log} " .
+					"WHERE event_type='welcome' AND context_hash=%d AND " .
+					"time > '%s'",
+				ldiw_facebook_welcome_app_context_hash(),
+				gmdate('Y-m-d H:i:s e',time()-5)));
+	if (!$is_duplicate) {
+		ldiw_facebook_welcome_app_log_event('welcome');
+		}
 	$php_script_url=$GLOBALS['base_url'] . '/ldiw_facebook_welcome_app/';
 	?>
 <style>
