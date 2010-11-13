@@ -117,6 +117,25 @@ function ldiw_facebook_welcome_app_planned_projects_html($country_code)
 	}
 
 /***************************************************************************/
+/******************                                       ******************/
+/****************** ldiw_facebook_welcome_app_log_event() ******************/
+/******************                                       ******************/
+/***************************************************************************/
+
+function ldiw_facebook_welcome_app_log_event($event_type,$attrs=array())
+{
+	$attrs=array_merge(array('time' => gmdate('Y-m-d H:i:s e'),
+				'context_hash' => crc32($_SERVER['HTTP_USER_AGENT'] . '|' .
+										$_POST['fb_sig_country'] . '|' .
+										$_POST['fb_sig_locale']),
+				'country_code' => substr($_POST['fb_sig_country'],0,2),
+				'locale' => substr($_POST['fb_sig_locale'],0,8),
+				'event_type' => $event_type,
+				),$attrs);
+	drupal_write_record('ldiw_facebook_welcome_app_log',$attrs);
+	}
+
+/***************************************************************************/
 /****************                                           ****************/
 /**************** ldiw_facebook_welcome_app_start_request() ****************/
 /****************                                           ****************/
@@ -124,11 +143,10 @@ function ldiw_facebook_welcome_app_planned_projects_html($country_code)
 
 function ldiw_facebook_welcome_app_start_request()
 {
-	global $language_countries;
-
 	$page_id=isset($_POST['fb_sig_profile_id']) ?
 					$_POST['fb_sig_profile_id'] : $_POST['fb_sig_profile'];
 	if ($page_id != '167901846562946' && $page_id != '110496952324003') {	//!!! Make configurable
+		ldiw_facebook_welcome_app_log_event('invalid');
 		print '<fb:redirect url="' . htmlentities(
 				ldiw_facebook_welcome_app_get_facebook_page_url()) . '" />';
 		exit();
@@ -237,6 +255,7 @@ function ldiw_facebook_welcome_app_welcome()
 {
 	list($facebook,$country_code)=
 								ldiw_facebook_welcome_app_start_request();
+	ldiw_facebook_welcome_app_log_event('welcome');
 	$php_script_url=$GLOBALS['base_url'] . '/ldiw_facebook_welcome_app/';
 	?>
 <style>
@@ -424,9 +443,9 @@ function ldiw_facebook_welcome_app_contribute()
 		$result=$facebook->api_client->call_method('facebook.fql.multiquery',
 			array('queries' => array(
 				'is_fan' => "SELECT page_id FROM page_fan " . 
-							"WHERE uid=me() AND page_id='$page_id'",
-				'my_location' => "SELECT current_location " .
-							"FROM user WHERE uid=me()",
+								"WHERE uid=me() AND page_id='$page_id'",
+				'profile' => "SELECT uid,current_location FROM user " .
+														"WHERE uid=me()",
 				'friend_locations' =>
 						"SELECT current_location,uid,is_app_user " .
 							"FROM user WHERE uid IN (" .
@@ -443,13 +462,33 @@ function ldiw_facebook_welcome_app_contribute()
 			}
 		} catch (FacebookRestClientException $e) {
 			if ($e->getCode() != 102 /* Requires user session */) {
-				//!!! Log "user did not authorise"
+				ldiw_facebook_welcome_app_log_event('contribute');
 				throw $e;
 				}
 			$fql_results['is_fan']=array();
 			$fql_results['friend_locations']=array();
-			$fql_results['my_location']=array();
+			$fql_results['profile']=array();
 			}
+
+	$event_attrs=array();
+	if (isset($fql_results['profile'][0]['uid'])) {
+		$event_attrs['facebook_uid']=$fql_results['profile'][0]['uid'];
+		}
+	if (isset($fql_results['profile'][0]['current_location'])) {
+		$location=$fql_results['profile'][0]['current_location'];
+		if (isset($location['country'])) {
+			$event_attrs['profile_country']=$location['country'];
+			}
+		if (isset($location['city'])) {
+			$event_attrs['profile_city']=$location['city'];
+			}
+		if (isset($location['zip'])) {
+			$event_attrs['profile_zipcode']=$location['zip'];
+			}
+		}
+	ldiw_facebook_welcome_app_log_event('contribute',$event_attrs);
+
+	//!!! Log likes
 
 	$next_todo_list_index=1;
 	if (!$fql_results['is_fan'] && 0/*!!!*/) {
@@ -467,8 +506,8 @@ function ldiw_facebook_welcome_app_contribute()
 		}
 
 	$my_location=null;
-	if (isset($fql_results['my_location'][0]['current_location']['country'])) {
-		$my_location=$fql_results['my_location'][0]['current_location'];
+	if (isset($fql_results['profile'][0]['current_location']['country'])) {
+		$my_location=$fql_results['profile'][0]['current_location'];
 
 		$location_country_code=
 					ldiw_facebook_welcome_app_find_country_by_name(
@@ -631,6 +670,14 @@ grant such access.
 to any other person or organization.
 </ul>
 EOT;
+	}
+
+/**
+ * Implementation of hook_views_api()
+ */
+function ldiw_facebook_welcome_app_views_api()
+{
+	return array('api' => 2);
 	}
 
 /**

@@ -1,6 +1,85 @@
 <?php
 // $Id:
 
-function ldiw_facebook_welcome_app_uninstall() {  
+function ldiw_facebook_welcome_app_schema()
+{
+	return array(
+		'ldiw_facebook_welcome_app_log' => array(
+			'description' =>
+						"User activity log for ldiw_facebook_welcome_app",
+			'fields' => array(
+				'id' => array(
+					'description' => 'Primary key; required by Views, ' .
+											'unnecessary for anything else',
+					'type' => 'serial',
+					'not null' => TRUE,
+					),
+				'time' => array(
+					'description' => "Time when the event happened",
+					'type' => 'datetime',
+					'not null' => TRUE,
+					),
+				'event_type' => array(
+					'description' => "Code describing the event",
+					'type' => 'varchar',
+					'length' => 20,
+					'not null' => TRUE,
+					),
+				'context_hash' => array(
+					'description' =>
+						"Hash of User-agent and other user-specific data",
+					'type' => 'int',
+					'not null' => TRUE,
+					),
+				'country_code' => array(
+					'description' =>
+						"User country code, taken from 'fb_sig_country'",
+					'type' => 'varchar',
+					'length' => 2,
+					),
+				'locale' => array(
+					'description' =>
+						"User locale, taken from 'fb_sig_locale'",
+					'type' => 'varchar',
+					'length' => 8,
+					),
+				'facebook_uid' => array(
+					'description' => "Facebook user ID",
+					'type' => 'varchar',
+					'length' => 20,
+					),
+				'profile_city' => array(
+					'description' => "City in users Facebook profile",
+					'type' => 'varchar',
+					'length' => 100,
+					),
+				'profile_country' => array(
+					'description' => "Country in users Facebook profile",
+					'type' => 'varchar',
+					'length' => 100,
+					),
+				'profile_zipcode' => array(
+					'description' => "Zipcode in users Facebook profile",
+					'type' => 'varchar',
+					'length' => 100,
+					),
+				),
+			'primary key' => array('id'),
+			'indexes' => array(
+						'facebook_uid_index' => array('facebook_uid'),
+						'context_hash_index' => array('context_hash'),
+						),
+			),
+		);
+	}
+
+function ldiw_facebook_welcome_app_install()
+{
+	drupal_install_schema('ldiw_facebook_welcome_app');
+	}
+
+function ldiw_facebook_welcome_app_uninstall()
+{  
+	drupal_uninstall_schema('ldiw_facebook_welcome_app');
 	variable_del('ldiw_facebook_welcome_app_facebook_page_url');
 	}

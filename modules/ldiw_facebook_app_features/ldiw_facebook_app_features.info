@@ -1,0 +1,8 @@
+core = "6.x"
+dependencies[] = "ldiw_facebook_welcome_app"
+dependencies[] = "views"
+description = "LDIW Facebook app features"
+features[views][] = "ldiw_facebook_log"
+features[views_api][] = "api:2"
+name = "LDIW Facebook app features"
+package = "Features"
