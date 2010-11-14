@@ -250,6 +250,19 @@ function ldiw_facebook_welcome_app_find_country_by_name($name)
 	return null;
 	}
 
+function ldiw_facebook_welcome_app_video($width,$height,$url_suffix='')
+{
+	?>
+	<fb:swf swfbgcolor="ffffff"
+		imgstyle="border-width:3px; border-color:black;"
+		swfsrc="http://www.youtube.com/v/A5GryIDl0qY<?php
+													print $url_suffix ;?>"
+		imgsrc="<?php print $GLOBALS['base_url'];
+			?>/sites/all/modules/ldiw_facebook_welcome_app/img/video.jpg"
+		width="<?php print $width; ?>" height="<?php print $height; ?>" />
+	<?php
+	}
+
 /***************************************************************************/
 /*******************                                     *******************/
 /******************* ldiw_facebook_welcome_app_welcome() *******************/
@@ -326,18 +339,10 @@ function ldiw_facebook_welcome_app_welcome()
 		See how 250 000 people did it in Slovenia, 50 000 in Estonia, etc:
 		</fb:intl>
 		<div id="ldiw_video">
-		<fb:swf swfbgcolor="ffffff" 
-			imgstyle="border-width:3px; border-color:black;" 
-			swfsrc='http://www.youtube.com/v/A5GryIDl0qY&autoplay=1' 
-			imgsrc='http://img.youtube.com/vi/A5GryIDl0qY/0.jpg' 
-			width='317' height='252' />
+		<?php print ldiw_facebook_welcome_app_video(317,252,'&autoplay=1'); ?>
 		</div>
 		<fb:js-string var="small_ldiw_video">
-		<fb:swf swfbgcolor="ffffff" 
-			imgstyle="border-width:3px; border-color:black;" 
-			swfsrc='http://www.youtube.com/v/A5GryIDl0qY' 
-			imgsrc='http://img.youtube.com/vi/A5GryIDl0qY/0.jpg' 
-			width='159' height='126' />
+		<?php print ldiw_facebook_welcome_app_video(159,126); ?>
 		</fb:js-string>
 		<p>
 		<fb:intl desc="Appears after general intro and video">
