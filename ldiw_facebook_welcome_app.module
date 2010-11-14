@@ -87,7 +87,7 @@ function ldiw_facebook_welcome_app_planned_projects_html($country_code)
 			'</fb:intl-token></fb:intl>';
 		}
 
-	$retval.='<p><ul class="projects_list">';
+	$retval.='<p><ul style="margin-left: 20px; padding-left: 20px;">';
 	foreach ($planned_projects as $project) {
 		$retval.='<li>';
 		$projectname=htmlentities($project['name'],ENT_COMPAT,'UTF-8');
@@ -270,45 +270,14 @@ function ldiw_facebook_welcome_app_welcome()
 		ldiw_facebook_welcome_app_log_event('welcome');
 		}
 	$php_script_url=$GLOBALS['base_url'] . '/ldiw_facebook_welcome_app/';
+
 	?>
-<style>
-.comment_body {
-	display: none;
-	}
-
-.projects_list {
-	margin-left: 20px;
-	padding-left: 20px;
-	}
-
-.actionitem_box {
-	display: block;
-	width: 444px;
-	background-color: #f7f7f7;
-	margin: 10px;
-	padding: 11px;
-	}
-
-.actionitem_box h2 {
-	font-size: 15px;
-	}
-
-.introtext {
-	font-size: 18px;
-	}
-
-.disclaimer {
-	color: gray;
-	}
-
-.ldiw_center {
-	margin-left: auto;
-	margin-right: auto;
-	width: 10%;
-	}
-</style>
-
+	<link ref="stylesheet" type="text/css" href="<?php
+			print $GLOBALS['base_url'] .
+				'/sites/all/modules/ldiw_facebook_welcome_app/img/style.css';
+			?>" />
 	<?php
+
 	$historical_project=NULL;
 	$historical_countries=array();
 	$historical_volunteers=0;
@@ -326,7 +295,7 @@ function ldiw_facebook_welcome_app_welcome()
 	if ($historical_project) {
 		?>
 		<fb:intl desc="Intro for countries who have already cleaned">
-		<div class="introtext">
+		<div style="font-size: 18px">
 		Remember {projectname}, where {nr_of_volunteers} volunteers cleaned up
 		{countryname}?
 		</div>
@@ -349,7 +318,7 @@ function ldiw_facebook_welcome_app_welcome()
 		}
 	else {
 		?>
-		<div class="introtext">
+		<div style="font-size: 18px">
 		<?php print LDIW_FACEBOOK_WELCOME_APP_INTRO_HTML; ?>
 		</div>
 		<p>
@@ -416,7 +385,8 @@ function do_auth() {
 	}
 </script>
 
-<div id="ldiw_throbber" class="ldiw_center"></div>
+<div id="ldiw_throbber"
+		style="margin-left: auto; margin-right: auto; width: 10%"></div>
 
 <div id="contribute">
 <p>
@@ -447,12 +417,27 @@ function do_auth() {
 </fb:tag>
 </form>
 
-<div class="disclaimer">
+<div style="color: gray">
 <fb:intl>(This will ask you for some profile information)</fb:intl>
 </div>
 </div>
 	<?php
 	exit();
+	}
+
+/***************************************************************************/
+/**************                                              ***************/
+/************** ldiw_facebook_welcome_app_actionitem_start() ***************/
+/**************                                              ***************/
+/***************************************************************************/
+
+function ldiw_facebook_welcome_app_actionitem_start($idx,$start_tag='h2')
+{
+	?>
+	<div style="display: block; width: 444px; background-color: #f7f7f7; margin: 10px; padding: 11px">
+	<?php
+	print '<' . $start_tag . ' style="font-size: 15px">';
+	print $idx . '.&nbsp;';
 	}
 
 /***************************************************************************/
@@ -522,9 +507,9 @@ function ldiw_facebook_welcome_app_contribute()
 
 	$next_todo_list_index=1;
 	if (!$fql_results['is_fan'] && 0/*!!!*/) {
+		ldiw_facebook_welcome_app_actionitem_start($next_todo_list_index++);
 		?>
-<div class="actionitem_box">
-<h2><?php print $next_todo_list_index++; ?>.&nbsp;<fb:intl>"Like"&nbsp;us. This causes more people to see us.</fb:intl></h2>
+<fb:intl>"Like"&nbsp;us. This causes more people to see us.</fb:intl></h2>
 <p>
 <fb:comments xid="welcome_tab" returnurl="<?php print htmlentities(
 					ldiw_facebook_welcome_app_get_facebook_page_url());
@@ -549,9 +534,10 @@ function ldiw_facebook_welcome_app_contribute()
 
 	$text=ldiw_facebook_welcome_app_planned_projects_html($country_code);
 	if ($text) {
+		ldiw_facebook_welcome_app_actionitem_start($next_todo_list_index++,
+																	'b');
 		?>
-<div class="actionitem_box">
-<b><?php print $next_todo_list_index++; ?>.</b>&nbsp;<?php print $text; ?>
+</b><?php print $text; ?>
 <p>
 <fb:intl>Believe me, you don't want to miss it! Visit their website and see how YOU can help.</fb:intl>
 </div>
@@ -606,9 +592,8 @@ function ldiw_facebook_welcome_app_contribute()
 			<?php
 			}
 
+		ldiw_facebook_welcome_app_actionitem_start($next_todo_list_index++);
 		?>
-<div class="actionitem_box">
-<h2><?php print $next_todo_list_index++; ?>.&nbsp;
 <fb:intl>Join the
 <a href="http://www.letsdoitworld.org/contact/international-team">international team</a>
 as a volunteer.</h2>
@@ -620,9 +605,9 @@ computer programming.
 		<?php
 		}
 	else {
+		ldiw_facebook_welcome_app_actionitem_start($next_todo_list_index++);
 		?>
-<div class="actionitem_box">
-<h2><?php print $next_todo_list_index++; ?>.&nbsp;<fb:intl>Read our
+<fb:intl>Read our
 <a href="http://www.letsdoitworld.org/manual">Country Cleaning Manual</a>
 to learn how you can organize a similar cleanup in {countryname}!
 <fb:intl-token name="countryname"><?php
