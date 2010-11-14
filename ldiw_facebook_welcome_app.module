@@ -141,6 +141,31 @@ function ldiw_facebook_welcome_app_log_event($event_type,$attrs=array())
 	}
 
 /***************************************************************************/
+/***********                                                     ***********/
+/*********** ldiw_facebook_welcome_app_redirect_to_welcome_tab() ***********/
+/***********                                                     ***********/
+/***************************************************************************/
+
+function ldiw_facebook_welcome_app_redirect_to_welcome_tab()
+{
+	print '<fb:redirect url="' . htmlentities(
+				ldiw_facebook_welcome_app_get_facebook_page_url()) . '" />';
+	}
+
+/***************************************************************************/
+/****************                                           ****************/
+/**************** ldiw_facebook_welcome_app_invite_accept() ****************/
+/****************                                           ****************/
+/***************************************************************************/
+
+function ldiw_facebook_welcome_app_invite_accept($facebook_uid)
+{
+	ldiw_facebook_welcome_app_log_event('invite_accept',array('facebook_uid' => $facebook_uid));
+	ldiw_facebook_welcome_app_redirect_to_welcome_tab();
+	exit();
+	}
+
+/***************************************************************************/
 /****************                                           ****************/
 /**************** ldiw_facebook_welcome_app_start_request() ****************/
 /****************                                           ****************/
@@ -152,8 +177,7 @@ function ldiw_facebook_welcome_app_start_request()
 					$_POST['fb_sig_profile_id'] : $_POST['fb_sig_profile'];
 	if ($page_id != '167901846562946' && $page_id != '110496952324003') {	//!!! Make configurable
 		ldiw_facebook_welcome_app_log_event('invalid');
-		print '<fb:redirect url="' . htmlentities(
-				ldiw_facebook_welcome_app_get_facebook_page_url()) . '" />';
+		ldiw_facebook_welcome_app_redirect_to_welcome_tab();
 		exit();
 		}
 
@@ -581,7 +605,11 @@ function ldiw_facebook_welcome_app_contribute()
 
 <fb:fbml-attribute name="content">
 	<?php print LDIW_FACEBOOK_WELCOME_APP_INTRO_HTML; ?>
-	<fb:req-choice <?php print htmlentities('url="' . $welcome_tab_url . '"'); ?> >
+	&lt;fb:req-choice url=&quot;http://apps.facebook.com/world_cleanup/_invite_accept/<?php
+		if (isset($fql_results['profile'][0]['uid'])) {
+			print $fql_results['profile'][0]['uid'];
+			}
+		?>&quot; label=&quot;Accept&quot; /&gt;
 </fb:fbml-attribute>
 
 <fb:multi-friend-selector cols="3" rows="3" showborder="false" bypass="cancel"
@@ -720,6 +748,12 @@ function ldiw_facebook_welcome_app_menu()
 		'ldiw_facebook_welcome_app/throbber.fbml' => array(
 			'page callback' => 'ldiw_facebook_welcome_app_throbber',
 			'access callback' => TRUE,
+			'type' => MENU_CALLBACK,
+			),
+		'ldiw_facebook_welcome_app_invite_accept/%' => array(
+			'page callback' => 'ldiw_facebook_welcome_app_invite_accept',
+			'access callback' => TRUE,
+			'page arguments' => array(1),
 			'type' => MENU_CALLBACK,
 			),
 
