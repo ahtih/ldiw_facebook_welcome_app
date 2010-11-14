@@ -280,6 +280,15 @@ function ldiw_facebook_app_features_views_default_views() {
       'relationship' => 'none',
     ),
   ));
+  $handler->override_option('sorts', array(
+    'time' => array(
+      'order' => 'DESC',
+      'id' => 'time',
+      'table' => 'ldiw_facebook_welcome_app_log',
+      'field' => 'time',
+      'relationship' => 'none',
+    ),
+  ));
   $handler->override_option('access', array(
     'type' => 'perm',
     'perm' => 'access administration pages',

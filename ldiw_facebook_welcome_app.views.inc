@@ -17,6 +17,7 @@ function ldiw_facebook_welcome_app_views_data()
 
 	'time' => array('title' => t('Time'),
 		'help' => t('Time when the event happened'),
+		'sort' => array('handler' => 'views_handler_sort'),
 		'field' => array('dummy' => 'dummy')),
 
 	'event_type' => array('title' => t('Event type'),
