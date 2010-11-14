@@ -124,10 +124,18 @@ function ldiw_facebook_welcome_app_planned_projects_html($country_code)
 
 function ldiw_facebook_welcome_app_context_hash()
 {
-	return crc32($_SERVER['HTTP_X_FB_USER_REMOTE_ADDR'] . '|' .
+	$value=crc32($_SERVER['HTTP_X_FB_USER_REMOTE_ADDR'] . '|' .
 				$_SERVER['HTTP_USER_AGENT'] . '|' .
 				$_POST['fb_sig_country'] . '|' .
 				$_POST['fb_sig_locale']);
+	// PHP docs incorrectly state the return value of crc32() is a signed int.
+	// On 64-bit Linux, the return value is unsigned. Convert it to signed:
+	$int_max=pow(2,31)-1;
+	if ($value > $int_max) {
+		$value-=$int_max*2;
+		$value-=2;
+		} 
+	return $value;
 	}
 
 function ldiw_facebook_welcome_app_log_event($event_type,$attrs=array())
