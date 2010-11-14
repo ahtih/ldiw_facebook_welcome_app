@@ -1,3 +1,7 @@
 .comment_body {
 	display: none;
 	}
+
+.inputaux {
+	opacity: 0;
+	}
