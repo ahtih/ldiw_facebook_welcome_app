@@ -315,7 +315,7 @@ function ldiw_facebook_welcome_app_welcome()
 	if (!$is_duplicate) {
 		ldiw_facebook_welcome_app_log_event('welcome');
 		}
-	$php_script_url=$GLOBALS['base_url'] . '/ldiw_facebook_welcome_app/';
+	$php_script_url=url('ldiw_facebook_welcome_app/',array('absolute'=>TRUE));
 
 	?>
 	<link ref="stylesheet" type="text/css" href="<?php
