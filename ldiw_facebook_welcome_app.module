@@ -371,9 +371,14 @@ function ldiw_facebook_welcome_app_welcome()
 		<fb:intl desc="Appears just before the video">
 		See how 250 000 people did it in Slovenia, 50 000 in Estonia, etc:
 		</fb:intl>
-		<div id="ldiw_video">
-		<?php print ldiw_facebook_welcome_app_video(317,252,'&autoplay=1'); ?>
+		<div id="ldiw_video" onclick="video_clicked()">
+		<img src="<?php print $GLOBALS['base_url'];
+			?>/sites/all/modules/ldiw_facebook_welcome_app/img/video.jpg"
+			width="317" height="252" />
 		</div>
+		<fb:js-string var="normal_ldiw_video">
+		<?php print ldiw_facebook_welcome_app_video(317,252,'&autoplay=1'); ?>
+		</fb:js-string>
 		<fb:js-string var="small_ldiw_video">
 		<?php print ldiw_facebook_welcome_app_video(159,126); ?>
 		</fb:js-string>
@@ -387,7 +392,8 @@ function ldiw_facebook_welcome_app_welcome()
 	?>
 
 <script>
-function do_ajax() {
+function do_ajax()
+{
 	var ajax=new Ajax();
 	ajax.responseType=Ajax.FBML;
 	// ajax.requireLogin=true;	// apparently this is not needed, and breaks AJAX call for some reason
@@ -404,13 +410,29 @@ function do_ajax() {
 	return true;
 	}
 
-function do_auth() {
+function video_clicked()
+{
+	var elem=document.getElementById('ldiw_video');
+	if (elem) {
+		var event_type='video_click.fbml';
+		if (elem.getElementsByTagName('img').length) {
+			elem.setInnerFBML(normal_ldiw_video);
+			event_type='video_play.fbml';
+			}
+
+		var ajax=new Ajax();
+		ajax.responseType=Ajax.RAW;
+		ajax.post('<?php print $php_script_url; ?>' + event_type,{});
+		}
+	}
+
+function do_auth()
+{
 	document.getElementById('contribute').setTextValue('');
 	document.getElementById('ldiw_throbber').setTextValue('...');
 	var elem=document.getElementById('ldiw_video');
-	if (elem) {
+	if (elem)
 		elem.setInnerFBML(small_ldiw_video);
-		}
 
 	var ajax=new Ajax();
 	ajax.responseType=Ajax.FBML;
@@ -683,6 +705,30 @@ function ldiw_facebook_welcome_app_throbber()
 	}
 
 /***************************************************************************/
+/*****************                                        ******************/
+/***************** ldiw_facebook_welcome_app_video_play() ******************/
+/*****************                                        ******************/
+/***************************************************************************/
+
+function ldiw_facebook_welcome_app_video_play()
+{
+	ldiw_facebook_welcome_app_log_event('video_play');
+	exit();
+	}
+
+/***************************************************************************/
+/*****************                                         *****************/
+/***************** ldiw_facebook_welcome_app_video_click() *****************/
+/*****************                                         *****************/
+/***************************************************************************/
+
+function ldiw_facebook_welcome_app_video_click()
+{
+	ldiw_facebook_welcome_app_log_event('video_click');
+	exit();
+	}
+
+/***************************************************************************/
 /***************************                     ***************************/
 /*************************** Admin settings page ***************************/
 /***************************                     ***************************/
@@ -743,19 +789,9 @@ function ldiw_facebook_welcome_app_views_api()
 
 function ldiw_facebook_welcome_app_menu()
 {
-	return array(
+	$menu_data=array(
 		'ldiw_facebook_welcome_app' => array(
 			'page callback' => 'ldiw_facebook_welcome_app_welcome',
-			'access callback' => TRUE,
-			'type' => MENU_CALLBACK,
-			),
-		'ldiw_facebook_welcome_app/contribute.fbml' => array(
-			'page callback' => 'ldiw_facebook_welcome_app_contribute',
-			'access callback' => TRUE,
-			'type' => MENU_CALLBACK,
-			),
-		'ldiw_facebook_welcome_app/throbber.fbml' => array(
-			'page callback' => 'ldiw_facebook_welcome_app_throbber',
 			'access callback' => TRUE,
 			'type' => MENU_CALLBACK,
 			),
@@ -783,4 +819,15 @@ function ldiw_facebook_welcome_app_menu()
 			'access arguments' => array('access content'),
 			),
 		);
+
+	foreach (array('contribute','throbber','video_play','video_click')
+																as $func) {
+		$menu_data["ldiw_facebook_welcome_app/" . $func . ".fbml"]=array(
+					'page callback' => "ldiw_facebook_welcome_app_$func",
+					'access callback' => TRUE,
+					'type' => MENU_CALLBACK,
+					);
+		}
+
+	return $menu_data;
 	}
