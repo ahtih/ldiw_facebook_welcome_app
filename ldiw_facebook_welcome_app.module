@@ -412,18 +412,39 @@ function do_ajax()
 
 function video_clicked()
 {
-	var elem=document.getElementById('ldiw_video');
+	var event_type='video_click.fbml';
+	elem=document.getElementById('ldiw_video');
 	if (elem) {
-		var event_type='video_click.fbml';
 		if (elem.getElementsByTagName('img').length) {
-			elem.setInnerFBML(normal_ldiw_video);
-			event_type='video_play.fbml';
-			}
+			event_type='video_play_liked.fbml';
 
-		var ajax=new Ajax();
-		ajax.responseType=Ajax.RAW;
-		ajax.post('<?php print $php_script_url; ?>' + event_type,{});
+			var like_container=document.getElementById('ldiw_like_container');
+			if (like_container) {
+				var comment_elems=like_container.getElementsByTagName('a');
+				for (var i=0;i < comment_elems.length;i++)
+					if (comment_elems[i].getClassName().indexOf(
+											'like_button_no_like') >= 0) {
+						comment_elems[i].addEventListener('click',
+												like_clicked_after_video);
+						event_type='video_play.fbml';
+						}
+				}
+
+			elem.setInnerFBML(normal_ldiw_video);
+			}
 		}
+
+	var ajax=new Ajax();
+	ajax.responseType=Ajax.RAW;
+	ajax.post('<?php print $php_script_url; ?>' + event_type,{});
+	}
+
+function like_clicked_after_video()
+{
+	var ajax=new Ajax();
+	ajax.responseType=Ajax.RAW;
+	ajax.post('<?php print $php_script_url; ?>liked_after_video.fbml',{});
+	return false;
 	}
 
 function do_auth()
@@ -456,11 +477,13 @@ function do_auth()
 <fb:intl desc="Appears after intro+video, just before the Like button">What do you think about it - LIKE it?</fb:intl>
 
 <p>
+<div id="ldiw_like_container">
 <fb:comments xid="welcome_tab" numposts="0" canpost="false" candelete="false"
 	returnurl="<?php print htmlentities(
 				ldiw_facebook_welcome_app_get_facebook_page_url()); ?>" >
 <fb:title></fb:title>
 </fb:comments>
+</div>
 <p>
 </fb:else>
 </fb:visible-to-connection>
@@ -705,26 +728,14 @@ function ldiw_facebook_welcome_app_throbber()
 	}
 
 /***************************************************************************/
-/*****************                                        ******************/
-/***************** ldiw_facebook_welcome_app_video_play() ******************/
-/*****************                                        ******************/
+/*************                                                **************/
+/************* ldiw_facebook_welcome_app_log_event_and_exit() **************/
+/*************                                                **************/
 /***************************************************************************/
 
-function ldiw_facebook_welcome_app_video_play()
+function ldiw_facebook_welcome_app_log_event_and_exit($event_type)
 {
-	ldiw_facebook_welcome_app_log_event('video_play');
-	exit();
-	}
-
-/***************************************************************************/
-/*****************                                         *****************/
-/***************** ldiw_facebook_welcome_app_video_click() *****************/
-/*****************                                         *****************/
-/***************************************************************************/
-
-function ldiw_facebook_welcome_app_video_click()
-{
-	ldiw_facebook_welcome_app_log_event('video_click');
+	ldiw_facebook_welcome_app_log_event($event_type);
 	exit();
 	}
 
@@ -820,10 +831,20 @@ function ldiw_facebook_welcome_app_menu()
 			),
 		);
 
-	foreach (array('contribute','throbber','video_play','video_click')
-																as $func) {
+	foreach (array('contribute','throbber') as $func) {
 		$menu_data["ldiw_facebook_welcome_app/" . $func . ".fbml"]=array(
 					'page callback' => "ldiw_facebook_welcome_app_$func",
+					'access callback' => TRUE,
+					'type' => MENU_CALLBACK,
+					);
+		}
+
+	foreach (array('video_click','video_play',
+			'video_play_liked','liked_after_video') as $func) {
+		$menu_data["ldiw_facebook_welcome_app/" . $func . ".fbml"]=array(
+					'page callback' =>
+							"ldiw_facebook_welcome_app_log_event_and_exit",
+					'page arguments' => array($func),
 					'access callback' => TRUE,
 					'type' => MENU_CALLBACK,
 					);
