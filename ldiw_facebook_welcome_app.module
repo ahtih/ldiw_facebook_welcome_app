@@ -447,6 +447,14 @@ function like_clicked_after_video()
 	return false;
 	}
 
+function share_click()
+{
+	var ajax=new Ajax();
+	ajax.responseType=Ajax.RAW;
+	ajax.post('<?php print $php_script_url; ?>share_click.fbml',{});
+	return false;
+	}
+
 function do_auth()
 {
 	document.getElementById('contribute').setTextValue('');
@@ -489,11 +497,13 @@ function do_auth()
 </fb:visible-to-connection>
 
 <p>
+<div onclick="share_click()">
 <fb:share-button class="url" href="<?php print htmlentities(
 				ldiw_facebook_welcome_app_get_facebook_page_url()); ?>" />
 <span style="line-height: 23px">
 Share this to your friends so that they can see it too!
 </span>
+</div>
 
 <p>
 <?php print ldiw_facebook_welcome_app_planned_projects_html($country_code); ?>
@@ -847,7 +857,7 @@ function ldiw_facebook_welcome_app_menu()
 					);
 		}
 
-	foreach (array('video_click','video_play',
+	foreach (array('share_click','video_click','video_play',
 			'video_play_liked','liked_after_video') as $func) {
 		$menu_data["ldiw_facebook_welcome_app/" . $func . ".fbml"]=array(
 					'page callback' =>
