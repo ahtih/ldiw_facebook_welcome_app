@@ -261,7 +261,7 @@ function ldiw_facebook_welcome_app_start_request()
 		$country_code=strtoupper($_POST['fb_sig_country']);
 		}
 
-	return array($facebook,$country_code);
+	return array($facebook,$country_code,$page_id);
 	}
 
 /***************************************************************************/
@@ -304,7 +304,7 @@ function ldiw_facebook_welcome_app_video($width,$height,$url_suffix='')
 
 function ldiw_facebook_welcome_app_welcome()
 {
-	list($facebook,$country_code)=
+	list($facebook,$country_code,$page_id)=
 								ldiw_facebook_welcome_app_start_request();
 	$is_duplicate=db_result(db_query(
 				"SELECT count(*) FROM {ldiw_facebook_welcome_app_log} " .
@@ -549,7 +549,7 @@ function ldiw_facebook_welcome_app_actionitem_start($idx,$start_tag='h2')
 
 function ldiw_facebook_welcome_app_contribute()
 {
-	list($facebook,$country_code)=
+	list($facebook,$country_code,$page_id)=
 								ldiw_facebook_welcome_app_start_request();
 	$welcome_tab_url=ldiw_facebook_welcome_app_get_facebook_page_url() .
 									'?v=app_' . $_POST['fb_sig_app_id'];
@@ -558,7 +558,7 @@ function ldiw_facebook_welcome_app_contribute()
 	try {
 		$result=$facebook->api_client->call_method('facebook.fql.multiquery',
 			array('queries' => array(
-				'is_fan' => "SELECT page_id FROM page_fan " . 
+				'is_fan' => "SELECT page_id,created_time FROM page_fan " . 
 								"WHERE uid=me() AND page_id='$page_id'",
 				'profile' => "SELECT uid,current_location FROM user " .
 														"WHERE uid=me()",
