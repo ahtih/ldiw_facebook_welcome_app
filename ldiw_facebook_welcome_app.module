@@ -488,6 +488,14 @@ function do_auth()
 </fb:else>
 </fb:visible-to-connection>
 
+<p>
+<fb:share-button class="url" href="<?php print htmlentities(
+				ldiw_facebook_welcome_app_get_facebook_page_url()); ?>" />
+<span style="line-height: 23px">
+Share this to your friends so that they can see it too!
+</span>
+
+<p>
 <?php print ldiw_facebook_welcome_app_planned_projects_html($country_code); ?>
 
 <p>
