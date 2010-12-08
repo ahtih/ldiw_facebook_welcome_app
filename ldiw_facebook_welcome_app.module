@@ -117,9 +117,9 @@ function ldiw_facebook_welcome_app_planned_projects_html($country_code)
 	}
 
 /***************************************************************************/
-/******************                                       ******************/
-/****************** ldiw_facebook_welcome_app_log_event() ******************/
-/******************                                       ******************/
+/****************                                          *****************/
+/**************** ldiw_facebook_welcome_app_context_hash() *****************/
+/****************                                          *****************/
 /***************************************************************************/
 
 function ldiw_facebook_welcome_app_context_hash()
@@ -137,6 +137,12 @@ function ldiw_facebook_welcome_app_context_hash()
 		} 
 	return $value;
 	}
+
+/***************************************************************************/
+/******************                                       ******************/
+/****************** ldiw_facebook_welcome_app_log_event() ******************/
+/******************                                       ******************/
+/***************************************************************************/
 
 function ldiw_facebook_welcome_app_log_event($event_type,$attrs=array())
 {
@@ -282,6 +288,12 @@ function ldiw_facebook_welcome_app_find_country_by_name($name)
 		}
 	return null;
 	}
+
+/***************************************************************************/
+/********************                                   ********************/
+/******************** ldiw_facebook_welcome_app_video() ********************/
+/********************                                   ********************/
+/***************************************************************************/
 
 function ldiw_facebook_welcome_app_video($width,$height,$url_suffix='')
 {
@@ -455,6 +467,18 @@ function share_click()
 	return false;
 	}
 
+function start_throbber(elem_id)
+{
+	document.getElementById(elem_id).setTextValue('...');
+
+	var ajax=new Ajax();
+	ajax.responseType=Ajax.FBML;
+	ajax.ondone=function(data) {
+		document.getElementById(elem_id).setInnerFBML(data);
+		}
+	ajax.post('<?php print $php_script_url; ?>throbber.fbml',{});
+	}
+
 function do_auth()
 {
 	document.getElementById('contribute').setTextValue('');
@@ -463,14 +487,36 @@ function do_auth()
 	if (elem)
 		elem.setInnerFBML(small_ldiw_video);
 
+	start_throbber('ldiw_throbber');
+	Facebook.showPermissionDialog('user_location,friends_location',do_ajax);
+	}
+
+function do_meetup_ajax()
+{
 	var ajax=new Ajax();
 	ajax.responseType=Ajax.FBML;
-	ajax.ondone=function(data) {
-		document.getElementById('ldiw_throbber').setInnerFBML(data);
-		}
-	ajax.post('<?php print $php_script_url; ?>throbber.fbml',{});
+	// ajax.requireLogin=true;	// apparently this is not needed, and breaks AJAX call for some reason
 
-	Facebook.showPermissionDialog('user_location,friends_location',do_ajax);
+	ajax.ondone=function(data) {
+		document.getElementById('ldiw_meetup_throbber').
+												setStyle('display','none');
+		var dialog=new Dialog(Dialog.DIALOG_POP);
+		dialog.showMessage('',data);
+		}
+	ajax.onerror=function() {
+		document.getElementById('ldiw_meetup_throbber').
+												setStyle('display','none');
+		}
+
+	ajax.post('<?php print $php_script_url; ?>meetup.fbml',{});
+	return true;
+	}
+
+function do_meetup_auth()
+{
+	start_throbber('ldiw_meetup_throbber');
+	Facebook.showPermissionDialog('user_location,publish_stream,email',
+															do_meetup_ajax);
 	}
 </script>
 
@@ -506,9 +552,89 @@ Share this to your friends so that they can see it too!
 </div>
 
 <p>
-<?php print ldiw_facebook_welcome_app_planned_projects_html($country_code); ?>
+<?php
+	$planned_projects_html=
+			ldiw_facebook_welcome_app_planned_projects_html($country_code);
+	print $planned_projects_html;
+
+	if (!$planned_projects_html && !$historical_project) {
+		$countryinfo=geonames_countryinfo($country_code);
+		$country_name=$countryinfo['name'];
+		$country_name_html=htmlentities($country_name);
+
+		$nr_of_meeters=db_result(db_query(
+				"SELECT COUNT(DISTINCT profile_email) " .
+					"FROM {ldiw_facebook_welcome_app_meeters} " .
+					"WHERE country_code='%s' OR profile_country='%s'",
+				$country_code,$country_name));
+		if ($nr_of_meeters == 1) {
+			?>
+			<fb:intl><b>One person</b> in <b>{countryname}</b>
+			is interested in meeting like-minded people to discuss how you
+			can together organize a cleanup in your area.
+			<fb:intl-token name="countryname"
+						><?php print $country_name_html ?></fb:intl-token>
+			</fb:intl>
+			<?php
+			}
+		elseif ($nr_of_meeters) {
+			?>
+			<fb:intl><b>{nr_of_meeters}</b> people in <b>{countryname}</b>
+			are interested in meeting each other to discuss how you can
+			together organize a cleanup in your area.
+			<fb:intl-token name="nr_of_meeters"
+						><?php print $nr_of_meeters ?></fb:intl-token>
+			<fb:intl-token name="countryname"
+						><?php print $country_name_html ?></fb:intl-token>
+			</fb:intl>
+			<?php
+			}
+		else {
+			?>
+			<fb:intl>We are registering people in <b>{countryname}</b>
+			interested in meeting each other to discuss how you can
+			together organize a cleanup in your area.
+			<fb:intl-token name="countryname"
+						><?php print $country_name_html ?></fb:intl-token>
+			</fb:intl>
+			<?php
+			}
+
+		if ($countryinfo['areainsqkm'] < 100e3) {
+			?>
+			<fb:intl>The meeting will happen once we have {min_meeters}
+			interested people in {countryname}.
+			<fb:intl-token name="min_meeters">10</fb:intl-token>
+			<fb:intl-token name="countryname"
+						><?php print $country_name_html ?></fb:intl-token>
+			</fb:intl>
+			<?php
+			}
+		else {
+			?>
+			<fb:intl>The meeting will happen once we have {min_meeters}
+			interested people in your city.
+			<fb:intl-token name="min_meeters">10</fb:intl-token>
+			</fb:intl>
+			<?php
+			}
+		?>
+<a href="#" onclick="do_meetup_auth()">
+	<fb:intl><b>Notify me by email</b> when the meeting is announced.</fb:intl>
+</a>
+
+<div id="ldiw_meetup_throbber"
+		style="margin-left: auto; margin-right: auto; width: 10%"></div>
 
 <p>
+<fb:intl>Read our
+<a href="http://www.letsdoitworld.org/manual">Country Cleaning Manual</a>
+to learn how you can organize a similar cleanup.
+</fb:intl>
+		<?php
+		}
+	else {
+?>
 <form style="margin-top: 20px">
 <fb:tag name="input">
 	<fb:tag-attribute name="type">button</fb:tag-attribute>
@@ -523,7 +649,37 @@ Share this to your friends so that they can see it too!
 </div>
 </div>
 	<?php
+		}
 	exit();
+	}
+
+/***************************************************************************/
+/**********                                                      ***********/
+/********** ldiw_facebook_welcome_app_event_attrs_from_profile() ***********/
+/**********                                                      ***********/
+/***************************************************************************/
+
+function ldiw_facebook_welcome_app_event_attrs_from_profile($profile_rows)
+{
+	$event_attrs=array();
+	if (!empty($profile_rows)) {
+		if (isset($profile_rows[0]['uid'])) {
+			$event_attrs['facebook_uid']=$profile_rows[0]['uid'];
+			}
+		if (isset($profile_rows[0]['current_location'])) {
+			$location=$profile_rows[0]['current_location'];
+			if (isset($location['country'])) {
+				$event_attrs['profile_country']=$location['country'];
+				}
+			if (isset($location['city'])) {
+				$event_attrs['profile_city']=$location['city'];
+				}
+			if (isset($location['zip'])) {
+				$event_attrs['profile_zipcode']=$location['zip'];
+				}
+			}
+		}
+	return $event_attrs;
 	}
 
 /***************************************************************************/
@@ -586,23 +742,9 @@ function ldiw_facebook_welcome_app_contribute()
 			$fql_results['profile']=array();
 			}
 
-	$event_attrs=array();
-	if (isset($fql_results['profile'][0]['uid'])) {
-		$event_attrs['facebook_uid']=$fql_results['profile'][0]['uid'];
-		}
-	if (isset($fql_results['profile'][0]['current_location'])) {
-		$location=$fql_results['profile'][0]['current_location'];
-		if (isset($location['country'])) {
-			$event_attrs['profile_country']=$location['country'];
-			}
-		if (isset($location['city'])) {
-			$event_attrs['profile_city']=$location['city'];
-			}
-		if (isset($location['zip'])) {
-			$event_attrs['profile_zipcode']=$location['zip'];
-			}
-		}
-	ldiw_facebook_welcome_app_log_event('contribute',$event_attrs);
+	ldiw_facebook_welcome_app_log_event('contribute',
+			ldiw_facebook_welcome_app_event_attrs_from_profile(
+												$fql_results['profile']));
 
 	//!!! Log likes
 
@@ -709,27 +851,59 @@ computer programming.
 </div>
 		<?php
 		}
-	else {
-		ldiw_facebook_welcome_app_actionitem_start($next_todo_list_index++);
+	exit();
+	}
+
+/***************************************************************************/
+/*******************                                    ********************/
+/******************* ldiw_facebook_welcome_app_meetup() ********************/
+/*******************                                    ********************/
+/***************************************************************************/
+
+function ldiw_facebook_welcome_app_meetup()
+{
+	list($facebook,$country_code,$page_id)=
+								ldiw_facebook_welcome_app_start_request();
+	try {
+		$profile_rows=$facebook->api_client->fql_query(
+				"SELECT uid,current_location,email FROM user WHERE uid=me()");
+		} catch (FacebookRestClientException $e) {
+			if ($e->getCode() != 102 /* Requires user session */) {
+				ldiw_facebook_welcome_app_log_event('meetup');
+				throw $e;
+				}
+			$profile_rows=array();
+			}
+
+	$event_attrs=ldiw_facebook_welcome_app_event_attrs_from_profile(
+															$profile_rows);
+	ldiw_facebook_welcome_app_log_event('meetup',$event_attrs);
+
+	if (empty($profile_rows[0]['uid'])) {
 		?>
-<fb:intl>Read our
-<a href="http://www.letsdoitworld.org/manual">Country Cleaning Manual</a>
-to learn how you can organize a similar cleanup in {countryname}!
-<fb:intl-token name="countryname"><?php
-			$countryinfo=geonames_countryinfo($country_code);
-			print htmlentities($countryinfo['name']); ?></fb:intl-token>
+<h2>
+<fb:intl>You have to allow access to your profile in order to
+be notified by e-mail.
 </fb:intl>
 </h2>
-</div>
 		<?php
-/*!!!
-4 people in Munich, Germany are interested in meeting each other to discuss
-how you can together organize a cleanup in your area. The meeting will
-happen once we have 10 people in Munich, Germany. If you are interested
-as well, <click here> and we'll email you when the meeting happens.
-*/
+		exit();
 		}
-	exit();
+
+	drupal_write_record('ldiw_facebook_welcome_app_meeters',
+			array_merge(array(
+				'time' => gmdate('Y-m-d H:i:s e'),
+				'context_hash' => ldiw_facebook_welcome_app_context_hash(),
+				'country_code' => substr($country_code,0,2),
+				'profile_email' => $profile_rows[0]['email'],
+				),$event_attrs));
+	?>
+<h2>
+<fb:intl>Thank you for registering your interest! You will be notified
+by e-mail when the meeting is announced.
+</fb:intl>
+</h2>
+	<?php
 	}
 
 /***************************************************************************/
@@ -849,7 +1023,7 @@ function ldiw_facebook_welcome_app_menu()
 			),
 		);
 
-	foreach (array('contribute','throbber') as $func) {
+	foreach (array('contribute','meetup','throbber') as $func) {
 		$menu_data["ldiw_facebook_welcome_app/" . $func . ".fbml"]=array(
 					'page callback' => "ldiw_facebook_welcome_app_$func",
 					'access callback' => TRUE,

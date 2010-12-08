@@ -1,6 +1,70 @@
 <?php
 // $Id:
 
+function _ldiw_facebook_welcome_app_meeters_initial_schema()
+{
+	return array(
+			'description' =>
+				"Users interested in meetup on ldiw_facebook_welcome_app",
+			'fields' => array(
+				'id' => array(
+					'description' => 'Primary key; required by Views, ' .
+											'unnecessary for anything else',
+					'type' => 'serial',
+					'not null' => TRUE,
+					),
+				'time' => array(
+					'description' =>
+								"Time when meetup interest was registered",
+					'type' => 'datetime',
+					'not null' => TRUE,
+					),
+				'context_hash' => array(
+					'description' =>
+						"Hash of User-agent and other user-specific data",
+					'type' => 'int',
+					'not null' => TRUE,
+					),
+				'country_code' => array(
+					'description' => "User country code",
+					'type' => 'varchar',
+					'length' => 2,
+					),
+				'facebook_uid' => array(
+					'description' => "Facebook user ID",
+					'type' => 'varchar',
+					'length' => 20,
+					),
+				'profile_city' => array(
+					'description' => "City in users Facebook profile",
+					'type' => 'varchar',
+					'length' => 100,
+					),
+				'profile_country' => array(
+					'description' => "Country in users Facebook profile",
+					'type' => 'varchar',
+					'length' => 100,
+					),
+				'profile_zipcode' => array(
+					'description' => "Zipcode in users Facebook profile",
+					'type' => 'varchar',
+					'length' => 100,
+					),
+				'profile_email' => array(
+					'description' => "E-mail in users Facebook profile",
+					'type' => 'varchar',
+					'length' => 100,
+					),
+				),
+			'primary key' => array('id'),
+			'indexes' => array(
+						'country_code_index' => array('country_code'),
+						'profile_country_index' => array('profile_country'),
+						'context_hash_index' => array('context_hash'),
+						),
+			);
+	}
+
 function ldiw_facebook_welcome_app_schema()
 {
 	return array(
@@ -70,6 +134,9 @@ function ldiw_facebook_welcome_app_schema()
 						'context_hash_index' => array('context_hash'),
 						),
 			),
+
+		'ldiw_facebook_welcome_app_meeters' =>
+					_ldiw_facebook_welcome_app_meeters_initial_schema(),
 		);
 	}
 
@@ -82,4 +149,12 @@ function ldiw_facebook_welcome_app_uninstall()
 {  
 	drupal_uninstall_schema('ldiw_facebook_welcome_app');
 	variable_del('ldiw_facebook_welcome_app_facebook_page_url');
+	}
+
+function ldiw_facebook_welcome_app_update_6100()
+{
+	$retval=array();
+	db_create_table($retval,'ldiw_facebook_welcome_app_meeters',
+					_ldiw_facebook_welcome_app_meeters_initial_schema());
+	return $retval;
 	}
