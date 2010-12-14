@@ -297,6 +297,7 @@ function ldiw_facebook_app_features_views_default_views() {
     'type' => 'none',
   ));
   $handler->override_option('title', 'Facebook events log');
+  $handler->override_option('css_class', 'smalltext');
   $handler->override_option('items_per_page', 100);
   $handler->override_option('style_plugin', 'table');
   $handler->override_option('style_options', array(
