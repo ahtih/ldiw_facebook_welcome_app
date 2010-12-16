@@ -1045,12 +1045,11 @@ function ldiw_facebook_welcome_app_log_analysis()
 					'Dec 1 16:28:10 2010 +0200',
 						'',
 					)),
-			'video_play/video_play_liked (only countries with video)' =>
-																	array(
+			'Video play (only countries with video)' => array(
 				'country_types' => array(1,1,0,0),
 				'action_event_types' => array('video_play','video_play_liked'),
 				'split_times' => array(
-					'',
+					'Nov 27 12:34:38 2010 +0200',
 						'',
 					)),
 			);
