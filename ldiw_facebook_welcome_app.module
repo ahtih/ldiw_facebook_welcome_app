@@ -910,6 +910,124 @@ by e-mail when the meeting is announced.
 	}
 
 /***************************************************************************/
+/****************                                          *****************/
+/**************** ldiw_facebook_welcome_app_log_analysis() *****************/
+/****************                                          *****************/
+/***************************************************************************/
+
+function ldiw_facebook_welcome_app_log_analysis()
+{
+		/***********************************/
+		/*****                         *****/
+		/***** Read input rows from DB *****/
+		/*****                         *****/
+		/***********************************/
+
+	$r=db_query("SELECT * FROM {ldiw_facebook_welcome_app_log} " .
+			"WHERE context_hash NOT IN " .
+				"(-884953777,-285855761,951715249,972834750,1225211723,2147483647) AND " . //!!! move to configuration
+				"event_type NOT IN ('invite_accept','invalid') " .
+				"ORDER BY time");
+
+		/*********************************/
+		/*****                       *****/
+		/***** Build $sessions array *****/
+		/*****                       *****/
+		/*********************************/
+
+	$sessions=array();
+	$context_hash_to_session=array();
+	while ($row=db_fetch_array($r)) {
+		$time=strtotime($row['time']);
+		$context_hash=$row['context_hash'];
+
+		if (array_key_exists($context_hash,$context_hash_to_session) &&
+				$sessions[$context_hash_to_session[$context_hash]]
+								['last_activity_time'] < $time - 2*3600) {
+			unset($context_hash_to_session[$context_hash]);
+			}
+
+		if (!array_key_exists($context_hash,$context_hash_to_session)) {
+			$context_hash_to_session[$context_hash]=array_push($sessions,
+						array('time' => $time,
+								'context_hash' => $context_hash,
+								'country_code' => $row['country_code'],
+								'locale' => $row['locale'],
+								'events' => array())) - 1;
+			}
+
+		$session_idx=$context_hash_to_session[$context_hash];
+
+		$sessions[$session_idx]['last_activity_time']=$time;
+		$sessions[$session_idx]['events'][$row['event_type']]=1;
+
+		if ($row['event_type'] != 'invite_accept' && $row['facebook_uid']) {
+			$sessions[$session_idx]['facebook_uid']=$row['facebook_uid'];
+			}
+		}
+
+		/*************************************/
+		/*****                           *****/
+		/***** Delete sessions by admins *****/
+		/*****                           *****/
+		/*************************************/
+
+	foreach ($sessions as $idx => $session) {
+		if (array_key_exists('facebook_uid',$session) &&
+				in_array($session['facebook_uid'],array('536382996'))) {	//!!! Make configurable
+			unset($sessions[$idx]);
+			}
+		}
+
+		/***********************************/
+		/*****                         *****/
+		/***** Build output HTML table *****/
+		/*****                         *****/
+		/***********************************/
+
+	$tablerows='';
+
+	foreach (array_reverse($sessions) as $session) {
+		$events=array_keys($session['events']);
+		rsort($events);
+		$tablerows.='<tr><td class="nowr">' . implode('</td><td>',
+				array(strftime('%Y-%m-%d %H:%M:%S',$session['time']),
+						$session['context_hash'],
+						$session['country_code'],$session['locale'],
+						implode(' ',$events),$session['facebook_uid'])) .
+				"</td></tr>\n";
+		}
+
+	$column_names=array('Time','Context hash','Country code','Locale',
+											'Event types','Facebook UID');
+
+	return <<<EOT
+<style>
+.nowr {
+	white-space: nowrap;
+	}
+.padded-table td {
+	padding-right: 1em;
+	}
+.padded-table tbody {
+	background-color: #eeeeee;
+	}
+.padded-table tbody tr {
+	border-bottom-color: #cccccc;
+	border-bottom-style: solid;
+	border-bottom-width: 1px;
+	}
+</style>
+
+<table class="padded-table"><thead><tr><td><b>
+EOT
+	. implode('</b></td><td><b>',$column_names) .
+			'</b></td></tr></thead><tbody>' .
+			$tablerows .
+			'</tbody></table>';
+	}
+
+/***************************************************************************/
 /******************                                      *******************/
 /****************** ldiw_facebook_welcome_app_throbber() *******************/
 /******************                                      *******************/
@@ -1041,6 +1159,13 @@ function ldiw_facebook_welcome_app_menu()
 			'title' => 'Privacy Policy',
 			'page callback' => 'ldiw_facebook_welcome_app_privacy_policy',
 			'access arguments' => array('access content'),
+			),
+
+		// Log analysis page
+		'ldiw_facebook_welcome_app/log-analysis' => array(
+			'title' => 'Facebook Page log analysis',
+			'page callback' => 'ldiw_facebook_welcome_app_log_analysis',
+			'access arguments' => array('administer site configuration'),
 			),
 		);
 
