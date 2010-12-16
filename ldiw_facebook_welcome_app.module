@@ -47,6 +47,45 @@ function ldiw_facebook_welcome_app_get_projects()
 	}
 
 /***************************************************************************/
+/***********                                                     ***********/
+/*********** ldiw_facebook_welcome_app_get_historical_projects() ***********/
+/***********                                                     ***********/
+/***************************************************************************/
+
+function ldiw_facebook_welcome_app_get_historical_projects()
+{
+	$historical_countries=array();
+	$historical_volunteers=0;
+	foreach (ldiw_facebook_welcome_app_get_projects() as $project) {
+		if (array_key_exists('nr_of_volunteers',$project)) {
+			$historical_countries[$project['country']]=$project;
+			$historical_volunteers+=$project['nr_of_volunteers'];
+			}
+		}
+
+	return array($historical_countries,$historical_volunteers);
+	}
+
+/***************************************************************************/
+/************                                                  *************/
+/************ ldiw_facebook_welcome_app_get_planned_projects() *************/
+/************                                                  *************/
+/***************************************************************************/
+
+function ldiw_facebook_welcome_app_get_planned_projects()
+{
+	$projects=array();
+	foreach (ldiw_facebook_welcome_app_get_projects() as $project) {
+		if (!array_key_exists('nr_of_volunteers',$project) &&
+					(array_key_exists('url',$project) ||
+											!empty($project['name']))) {
+			$projects[$project['country']][]=$project;
+			}
+		}
+	return $projects;
+	}
+
+/***************************************************************************/
 /************                                                   ************/
 /************ ldiw_facebook_welcome_app_planned_projects_html() ************/
 /************                                                   ************/
@@ -54,25 +93,19 @@ function ldiw_facebook_welcome_app_get_projects()
 
 function ldiw_facebook_welcome_app_planned_projects_html($country_code)
 {
-	$countryinfo=geonames_countryinfo($country_code);
-	$country_name_html=htmlentities($countryinfo['name']);
-
-	$planned_projects=array();
-	foreach (ldiw_facebook_welcome_app_get_projects() as $project) {
-		if ($project['country'] == $country_code &&
-						!array_key_exists('nr_of_volunteers',$project) &&
-						(array_key_exists('url',$project) ||
-											!empty($project['name']))) {
-			array_push($planned_projects,$project);
-			}
-		}
-
-	if (!$planned_projects) {
+	$planned_projects_per_country=
+						ldiw_facebook_welcome_app_get_planned_projects();
+	if (!array_key_exists($country_code,$planned_projects_per_country)) {
 		return '';
 		}
 
+	$planned_projects=$planned_projects_per_country[$country_code];
+
 	sort($planned_projects);
 	$retval='';
+
+	$countryinfo=geonames_countryinfo($country_code);
+	$country_name_html=htmlentities($countryinfo['name']);
 
 	if (count($planned_projects) > 1) {
 		$retval.='<fb:intl>You are from <b>{countryname}</b>, right? ' .
@@ -114,6 +147,77 @@ function ldiw_facebook_welcome_app_planned_projects_html($country_code)
 	$retval.="</ul>\n";
 
 	return $retval;
+	}
+
+/***************************************************************************/
+/**************                                              ***************/
+/************** ldiw_facebook_welcome_app_get_country_code() ***************/
+/**************                                              ***************/
+/***************************************************************************/
+
+function ldiw_facebook_welcome_app_get_country_code($country_code,$locale)
+{
+	$language_countries=array(
+			'fr' => 'fr',
+			'et' => 'ee',
+			'da' => 'dk',
+			'sv' => 'se',
+			'it' => 'it',
+			'fi' => 'fi',
+			'pt' => 'pt',
+			'ru' => 'ru',
+			'nl' => 'nl',
+			'cs' => 'cz',
+			'lt' => 'lt',
+			'zh' => 'cn',
+			'el' => 'gr',
+			'hu' => 'hu',
+			'id' => 'id',
+			'ar' => 'sa',
+			'sk' => 'sk',
+			'vi' => 'vn',
+			'lv' => 'lv',
+			'pl' => 'pl',
+			'hr' => 'hr',
+			'tr' => 'tr',
+			'ca' => 'es',
+			'nb' => 'no',
+			'ko' => 'kr',
+			'ro' => 'ro',
+			'eu' => 'es',
+			'sl' => 'si',
+			'ja' => 'jp',
+			'bg' => 'bg',
+			'he' => 'il',
+			'gl' => 'es',
+			'ms' => 'my',
+			'is' => 'is',
+			'th' => 'th',
+			'nn' => 'no',
+			'sq' => 'al',
+			'uk' => 'ua',
+			'sr' => 'rs',
+			'hi' => 'in',
+			'af' => 'za',
+			'tl' => 'pi',
+			'ta' => 'in',
+			'te' => 'in',
+			'cy' => 'gb',
+			'ga' => 'ie',
+			'li' => 'nl',
+			'rm' => 'ch',
+			'jv' => 'id',
+			'bs' => 'ba',
+			'ka' => 'ge',
+			'mk' => 'mk',
+			'so' => 'so',
+			);
+
+	$language_code=substr($locale,0,2);
+	if (array_key_exists($language_code,$language_countries)) {
+		$country_code=$language_countries[$language_code];
+		}
+	return strtoupper($country_code);
 	}
 
 /***************************************************************************/
@@ -206,71 +310,10 @@ function ldiw_facebook_welcome_app_start_request()
 
 	//!!! verify fb_sig signature
 
-	$language_countries=array(
-			'fr' => 'fr',
-			'et' => 'ee',
-			'da' => 'dk',
-			'sv' => 'se',
-			'it' => 'it',
-			'fi' => 'fi',
-			'pt' => 'pt',
-			'ru' => 'ru',
-			'nl' => 'nl',
-			'cs' => 'cz',
-			'lt' => 'lt',
-			'zh' => 'cn',
-			'el' => 'gr',
-			'hu' => 'hu',
-			'id' => 'id',
-			'ar' => 'sa',
-			'sk' => 'sk',
-			'vi' => 'vn',
-			'lv' => 'lv',
-			'pl' => 'pl',
-			'hr' => 'hr',
-			'tr' => 'tr',
-			'ca' => 'es',
-			'nb' => 'no',
-			'ko' => 'kr',
-			'ro' => 'ro',
-			'eu' => 'es',
-			'sl' => 'si',
-			'ja' => 'jp',
-			'bg' => 'bg',
-			'he' => 'il',
-			'gl' => 'es',
-			'ms' => 'my',
-			'is' => 'is',
-			'th' => 'th',
-			'nn' => 'no',
-			'sq' => 'al',
-			'uk' => 'ua',
-			'sr' => 'rs',
-			'hi' => 'in',
-			'af' => 'za',
-			'tl' => 'pi',
-			'ta' => 'in',
-			'te' => 'in',
-			'cy' => 'gb',
-			'ga' => 'ie',
-			'li' => 'nl',
-			'rm' => 'ch',
-			'jv' => 'id',
-			'bs' => 'ba',
-			'ka' => 'ge',
-			'mk' => 'mk',
-			'so' => 'so',
-			);
-
-	$language_code=substr($_POST['fb_sig_locale'],0,2);
-	if (array_key_exists($language_code,$language_countries)) {
-		$country_code=strtoupper($language_countries[$language_code]);
-		}
-	else {
-		$country_code=strtoupper($_POST['fb_sig_country']);
-		}
-
-	return array($facebook,$country_code,$page_id);
+	return array($facebook,
+				ldiw_facebook_welcome_app_get_country_code(
+						$_POST['fb_sig_country'],$_POST['fb_sig_locale']),
+				$page_id);
 	}
 
 /***************************************************************************/
@@ -339,19 +382,11 @@ function ldiw_facebook_welcome_app_welcome()
 			?>" />
 	<?php
 
-	$historical_project=NULL;
-	$historical_countries=array();
-	$historical_volunteers=0;
-	foreach (ldiw_facebook_welcome_app_get_projects() as $project) {
-		if (array_key_exists('nr_of_volunteers',$project)) {
-			$historical_countries[$project['country']]=1;
-			$historical_volunteers+=$project['nr_of_volunteers'];
-
-			if ($project['country'] == $country_code) {
-				$historical_project=$project;
-				}
-			}
-		}
+	list($historical_countries,$historical_volunteers)=
+						ldiw_facebook_welcome_app_get_historical_projects();
+	$historical_project=array_key_exists(
+									$country_code,$historical_countries) ?
+			$historical_project=$historical_countries[$country_code] : NULL;
 
 	if ($historical_project) {
 		?>
@@ -925,7 +960,7 @@ function ldiw_facebook_welcome_app_log_analysis()
 
 	$r=db_query("SELECT * FROM {ldiw_facebook_welcome_app_log} " .
 			"WHERE context_hash NOT IN " .
-				"(-884953777,-285855761,951715249,972834750,1225211723,2147483647) AND " . //!!! move to configuration
+				"(-884953777,-285855761,951715249,972834750,1225211723,2147483647,729178307) AND " . //!!! move to configuration
 				"event_type NOT IN ('invite_accept','invalid') " .
 				"ORDER BY time");
 
@@ -979,29 +1014,113 @@ function ldiw_facebook_welcome_app_log_analysis()
 			}
 		}
 
-		/***********************************/
-		/*****                         *****/
-		/***** Build output HTML table *****/
-		/*****                         *****/
-		/***********************************/
+		/**********************************/
+		/*****                        *****/
+		/***** Calculate action stats *****/
+		/*****                        *****/
+		/**********************************/
 
-	$tablerows='';
+	$stats_config=array(		//!!! Make this configurable
+			'contribute (old countries only)' => array(
+				'country_types' => array(0,1,1,1),
+				'action_event_types' => array('contribute'),
+				'split_times' => array(
+					'',
+						'"Start cleaning!"',
+					'Nov 15 18:32:39 2010 +0200',
+						'"Click here to help us!"',
+					'Dec 4 18:23:04 2010 +0200',
+						'"Click here to help us! (it takes just one minute)"',
+					)),
+			'meetup (new countries only)' => array(
+				'country_types' => array(1,0,0,0),
+				'action_event_types' => array('meetup'),
+				'split_times' => array(
+					'Dec 8 20:49:13 2010 +0200',
+						'',
+					)),
+			'share_click' => array(
+				'action_event_types' => array('share_click'),
+				'split_times' => array(
+					'Dec 1 16:28:10 2010 +0200',
+						'',
+					)),
+			'video_play/video_play_liked (only countries with video)' =>
+																	array(
+				'country_types' => array(1,1,0,0),
+				'action_event_types' => array('video_play','video_play_liked'),
+				'split_times' => array(
+					'',
+						'',
+					)),
+			);
 
-	foreach (array_reverse($sessions) as $session) {
-		$events=array_keys($session['events']);
-		rsort($events);
-		$tablerows.='<tr><td class="nowr">' . implode('</td><td>',
-				array(strftime('%Y-%m-%d %H:%M:%S',$session['time']),
-						$session['context_hash'],
-						$session['country_code'],$session['locale'],
-						implode(' ',$events),$session['facebook_uid'])) .
-				"</td></tr>\n";
+	$stats=array();
+	foreach ($stats_config as $stats_title => $stats_conf) {
+		$split_times=$stats_conf['split_times'];
+		for ($i=0;$i < count($split_times);$i+=2) {
+			$stats[$stats_title][$i]['count']=0;
+			$stats[$stats_title][$i]['hits']=0;
+
+			$split=$split_times[$i];
+			if (!$split) {
+				$split=0;
+				}
+			else {
+				$split=strtotime($split);	//!!! is timezone handling correct?
+				if ($split === FALSE || $split === -1) {
+					drupal_set_message('Unable to parse time in ' .
+									'stats config: ' . $split_times[$i]);
+					$split=0;
+					}
+				}
+			$stats_config[$stats_title]['split_times'][$i]=$split;
+			}
 		}
 
-	$column_names=array('Time','Context hash','Country code','Locale',
-											'Event types','Facebook UID');
+	list($historical_countries,$historical_volunteers)=
+						ldiw_facebook_welcome_app_get_historical_projects();
+	$planned_projects_per_country=
+						ldiw_facebook_welcome_app_get_planned_projects();
 
-	return <<<EOT
+	foreach ($sessions as $idx => $session) {
+		$country_code=ldiw_facebook_welcome_app_get_country_code(
+							$session['country_code'],$session['locale']);
+		$country_type=2*(int)(bool)array_key_exists(
+								$country_code,$historical_countries) + 
+						(int)(bool)array_key_exists(
+								$country_code,$planned_projects_per_country);
+
+		foreach ($stats_config as $stats_title => $stats_conf) {
+			if (array_key_exists('country_types',$stats_conf) &&
+						!$stats_conf['country_types'][$country_type]) {
+				continue;
+				}
+
+			$split_times=$stats_conf['split_times'];
+			for ($i=0;$i < count($split_times);$i+=2) {
+				if ($session['time'] < $split_times[$i]) {
+					break;
+					}
+				}
+			$i-=2;
+			if ($i < 0 || $i+1 >= count($split_times)) {
+				continue;
+				}
+			$stats[$stats_title][$i]['count']+=1;
+			$stats[$stats_title][$i]['hits']+=(int)(bool)array_intersect(
+									array_keys($session['events']),
+									$stats_conf['action_event_types']);
+			}
+		}
+
+		/******************************************/
+		/*****                                *****/
+		/***** Build action stats HTML output *****/
+		/*****                                *****/
+		/******************************************/
+
+	$output=<<<EOT
 <style>
 .nowr {
 	white-space: nowrap;
@@ -1018,10 +1137,69 @@ function ldiw_facebook_welcome_app_log_analysis()
 	border-bottom-width: 1px;
 	}
 </style>
+EOT;
 
-<table class="padded-table"><thead><tr><td><b>
-EOT
-	. implode('</b></td><td><b>',$column_names) .
+	foreach ($stats_config as $stats_title => $stats_conf) {
+		$column_names=array($stats_title,'Result','Hits','Sessions');
+		$tablerows='';
+
+		$split_times=$stats_conf['split_times'];
+		for ($i=0;$i+1 < count($split_times);$i+=2) {
+			$values=array($split_times[$i+1]);
+
+			if ($stats[$stats_title][$i]['count']) {
+				$values[]=sprintf('%.1f%%',
+								$stats[$stats_title][$i]['hits'] * 100 /
+								$stats[$stats_title][$i]['count']);
+				$values[]=$stats[$stats_title][$i]['hits'];
+				$values[]=$stats[$stats_title][$i]['count'];
+				}
+			else {
+				$values[]='';
+				$values[]='';
+				$values[]='';
+				}
+
+			$tablerows.='<tr><td>' . implode('</td><td>',
+						array_map(htmlentities,$values)) .
+						"</td></tr>\n";
+			}
+
+		$output.='<table class="padded-table"><thead><tr><td><b>' .
+				implode('</b></td><td><b>',
+								array_map(htmlentities,$column_names)) .
+				'</b></td></tr></thead><tbody>' .
+				$tablerows .
+				"</tbody></table><br>\n";
+		}
+
+	$output.="\n<br>\n";
+
+		/*******************************************/
+		/*****                                 *****/
+		/***** Build sessions list HTML output *****/
+		/*****                                 *****/
+		/*******************************************/
+
+	$tablerows='';
+
+	foreach (array_reverse($sessions) as $session) {
+		$events=array_keys($session['events']);
+		rsort($events);
+		$tablerows.='<tr><td class="nowr">' . implode('</td><td>',
+				array_map(htmlentities,array(
+						strftime('%Y-%m-%d %H:%M:%S',$session['time']),
+						$session['context_hash'],
+						$session['country_code'],$session['locale'],
+						implode(' ',$events),$session['facebook_uid']))) .
+				"</td></tr>\n";
+		}
+
+	$column_names=array('Time','Context hash','Country code','Locale',
+											'Event types','Facebook UID');
+	return $output . '<table class="padded-table"><thead><tr><td><b>' .
+			implode('</b></td><td><b>',
+								array_map(htmlentities,$column_names)) .
 			'</b></td></tr></thead><tbody>' .
 			$tablerows .
 			'</tbody></table>';
