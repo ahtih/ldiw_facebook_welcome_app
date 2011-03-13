@@ -213,9 +213,11 @@ function ldiw_facebook_welcome_app_get_country_code($country_code,$locale)
 			'so' => 'so',
 			);
 
-	$language_code=substr($locale,0,2);
-	if (array_key_exists($language_code,$language_countries)) {
-		$country_code=$language_countries[$language_code];
+	if (is_string($locale) && $locale != '') {
+		$language_code=substr($locale,0,2);
+		if (array_key_exists($language_code,$language_countries)) {
+			$country_code=$language_countries[$language_code];
+			}
 		}
 	return strtoupper($country_code);
 	}
