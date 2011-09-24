@@ -766,7 +766,8 @@ function ldiw_facebook_welcome_app_contribute()
 	list($facebook,$country_code,$page_id,$req_params)=
 								ldiw_facebook_welcome_app_start_request();
 	$welcome_tab_url=ldiw_facebook_welcome_app_get_facebook_page_url() .
-									'?v=app_' . $req_params['app_id'];
+			'?sk=app_' . variable_get(
+						'ldiw_facebook_welcome_app_facebook_app_id','');
 
 	$fql_results=array();
 	try {
@@ -1267,6 +1268,15 @@ function ldiw_facebook_welcome_app_admin_settings()
 						ldiw_facebook_welcome_app_get_facebook_page_url(),
 				'#size' => 60,
 				'#maxlength' => 1000,
+				'#required' => TRUE,
+				),
+		'ldiw_facebook_welcome_app_facebook_app_id' => array(
+				'#type' => 'textfield',
+				'#title' => t('Facebook App ID'),
+				'#default_value' => variable_get(
+						'ldiw_facebook_welcome_app_facebook_app_id',''),
+				'#size' => 15,
+				'#maxlength' => 15,
 				'#required' => TRUE,
 				),
 		'ldiw_facebook_welcome_app_facebook_api_key' => array(
