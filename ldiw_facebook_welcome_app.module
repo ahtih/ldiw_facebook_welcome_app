@@ -223,17 +223,32 @@ function ldiw_facebook_welcome_app_get_country_code($country_code,$locale)
 	}
 
 /***************************************************************************/
+/**************                                               **************/
+/************** ldiw_facebook_welcome_app_decode_req_params() **************/
+/**************                                               **************/
+/***************************************************************************/
+
+function ldiw_facebook_welcome_app_decode_req_params()
+{
+	list($encoded_sig,$payload)=explode('.',$_POST['signed_request'],2);
+
+	//!!! verify signature
+
+	return json_decode(base64_decode($payload),true);
+	}
+
+/***************************************************************************/
 /****************                                          *****************/
 /**************** ldiw_facebook_welcome_app_context_hash() *****************/
 /****************                                          *****************/
 /***************************************************************************/
 
-function ldiw_facebook_welcome_app_context_hash()
+function ldiw_facebook_welcome_app_context_hash($req_params)
 {
 	$value=crc32($_SERVER['HTTP_X_FB_USER_REMOTE_ADDR'] . '|' .
 				$_SERVER['HTTP_USER_AGENT'] . '|' .
-				$_POST['fb_sig_country'] . '|' .
-				$_POST['fb_sig_locale']);
+				$req_params['user']['country'] . '|' .
+				$req_params['user']['locale']);
 	// PHP docs incorrectly state the return value of crc32() is a signed int.
 	// On 64-bit Linux, the return value is unsigned. Convert it to signed:
 	$int_max=pow(2,31)-1;
@@ -252,10 +267,13 @@ function ldiw_facebook_welcome_app_context_hash()
 
 function ldiw_facebook_welcome_app_log_event($event_type,$attrs=array())
 {
+	$req_params=ldiw_facebook_welcome_app_decode_req_params();
+
 	$attrs=array_merge(array('time' => gmdate('Y-m-d H:i:s e'),
-				'context_hash' => ldiw_facebook_welcome_app_context_hash(),
-				'country_code' => substr($_POST['fb_sig_country'],0,2),
-				'locale' => substr($_POST['fb_sig_locale'],0,8),
+				'context_hash' =>
+						ldiw_facebook_welcome_app_context_hash($req_params),
+				'country_code' => substr($req_params['user']['country'],0,2),
+				'locale' => substr($req_params['user']['locale'],0,8),
 				'event_type' => $event_type,
 				),$attrs);
 	drupal_write_record('ldiw_facebook_welcome_app_log',$attrs);
@@ -281,7 +299,8 @@ function ldiw_facebook_welcome_app_redirect_to_welcome_tab()
 
 function ldiw_facebook_welcome_app_invite_accept($facebook_uid)
 {
-	ldiw_facebook_welcome_app_log_event('invite_accept',array('facebook_uid' => $facebook_uid));
+	ldiw_facebook_welcome_app_log_event('invite_accept',
+									array('facebook_uid' => $facebook_uid));
 	ldiw_facebook_welcome_app_redirect_to_welcome_tab();
 	exit();
 	}
@@ -294,8 +313,9 @@ function ldiw_facebook_welcome_app_invite_accept($facebook_uid)
 
 function ldiw_facebook_welcome_app_start_request()
 {
-	$page_id=isset($_POST['fb_sig_profile_id']) ?
-					$_POST['fb_sig_profile_id'] : $_POST['fb_sig_profile'];
+	$req_params=ldiw_facebook_welcome_app_decode_req_params();
+	$page_id=isset($req_params['profile_id']) ?
+					$req_params['profile_id'] : $req_params['profile'];
 	if ($page_id != '167901846562946' && $page_id != '110496952324003') {	//!!! Make configurable
 		ldiw_facebook_welcome_app_log_event('invalid');
 		ldiw_facebook_welcome_app_redirect_to_welcome_tab();
@@ -310,12 +330,12 @@ function ldiw_facebook_welcome_app_start_request()
 				'ldiw_facebook_welcome_app_facebook_application_secret',''));
 		// This may emit some cookies/headers
 
-	//!!! verify fb_sig signature
-
 	return array($facebook,
 				ldiw_facebook_welcome_app_get_country_code(
-						$_POST['fb_sig_country'],$_POST['fb_sig_locale']),
-				$page_id);
+										$req_params['user']['country'],
+										$req_params['user']['locale']),
+				$page_id,
+				$req_params);
 	}
 
 /***************************************************************************/
@@ -364,13 +384,13 @@ function ldiw_facebook_welcome_app_video($width,$height,$url_suffix='')
 
 function ldiw_facebook_welcome_app_welcome()
 {
-	list($facebook,$country_code,$page_id)=
+	list($facebook,$country_code,$page_id,$req_params)=
 								ldiw_facebook_welcome_app_start_request();
 	$is_duplicate=db_result(db_query(
 				"SELECT count(*) FROM {ldiw_facebook_welcome_app_log} " .
 					"WHERE event_type='welcome' AND context_hash=%d AND " .
 					"time > '%s'",
-				ldiw_facebook_welcome_app_context_hash(),
+				ldiw_facebook_welcome_app_context_hash($req_params),
 				gmdate('Y-m-d H:i:s e',time()-5)));
 	if (!$is_duplicate) {
 		ldiw_facebook_welcome_app_log_event('welcome');
@@ -745,10 +765,10 @@ function ldiw_facebook_welcome_app_actionitem_start($idx,$start_tag='h2')
 
 function ldiw_facebook_welcome_app_contribute()
 {
-	list($facebook,$country_code,$page_id)=
+	list($facebook,$country_code,$page_id,$req_params)=
 								ldiw_facebook_welcome_app_start_request();
 	$welcome_tab_url=ldiw_facebook_welcome_app_get_facebook_page_url() .
-									'?v=app_' . $_POST['fb_sig_app_id'];
+									'?v=app_' . $req_params['app_id'];
 
 	$fql_results=array();
 	try {
@@ -902,7 +922,7 @@ computer programming.
 
 function ldiw_facebook_welcome_app_meetup()
 {
-	list($facebook,$country_code,$page_id)=
+	list($facebook,$country_code,$page_id,$req_params)=
 								ldiw_facebook_welcome_app_start_request();
 	try {
 		$profile_rows=$facebook->api_client->fql_query(
@@ -933,7 +953,8 @@ be notified by e-mail.
 	drupal_write_record('ldiw_facebook_welcome_app_meeters',
 			array_merge(array(
 				'time' => gmdate('Y-m-d H:i:s e'),
-				'context_hash' => ldiw_facebook_welcome_app_context_hash(),
+				'context_hash' =>
+						ldiw_facebook_welcome_app_context_hash($req_params),
 				'country_code' => substr($country_code,0,2),
 				'profile_email' => $profile_rows[0]['email'],
 				),$event_attrs));
