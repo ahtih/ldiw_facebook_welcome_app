@@ -695,14 +695,12 @@ to learn how you can organize a similar cleanup.
 		}
 	else {
 ?>
-<form style="margin-top: 20px">
 <fb:tag name="input">
 	<fb:tag-attribute name="type">button</fb:tag-attribute>
 	<fb:tag-attribute name="value"><fb:intl>Click here to help us! (it takes just one minute)</fb:intl></fb:tag-attribute>
 	<fb:tag-attribute name="onclick">do_auth()</fb:tag-attribute>
 	<fb:tag-attribute name="class">inputbutton request_form_submit</fb:tag-attribute>
 </fb:tag>
-</form>
 
 <div style="color: gray; display: none">
 <fb:intl>(This will ask you for some profile information)</fb:intl>
