@@ -323,11 +323,10 @@ function ldiw_facebook_welcome_app_start_request()
 		}
 
 	require_once 'lib/facebook.php';
-	$facebook=new Facebook(
-			variable_get(
-				'ldiw_facebook_welcome_app_facebook_api_key',''),
-			variable_get(
-				'ldiw_facebook_welcome_app_facebook_application_secret',''));
+	$facebook=new Facebook(array('appId' => variable_get(
+				'ldiw_facebook_welcome_app_facebook_app_id',''),
+			'secret' => variable_get(
+				'ldiw_facebook_welcome_app_facebook_application_secret','')));
 		// This may emit some cookies/headers
 
 	return array($facebook,
@@ -771,8 +770,8 @@ function ldiw_facebook_welcome_app_contribute()
 
 	$fql_results=array();
 	try {
-		$result=$facebook->api_client->call_method('facebook.fql.multiquery',
-			array('queries' => array(
+		$result=$facebook->api(array('method' => 'facebook.fql.multiquery',
+			'queries' => array(
 				'is_fan' => "SELECT page_id,created_time FROM page_fan " . 
 								"WHERE uid=me() AND page_id='$page_id'",
 				'profile' => "SELECT uid,current_location FROM user " .
@@ -924,8 +923,9 @@ function ldiw_facebook_welcome_app_meetup()
 	list($facebook,$country_code,$page_id,$req_params)=
 								ldiw_facebook_welcome_app_start_request();
 	try {
-		$profile_rows=$facebook->api_client->fql_query(
-				"SELECT uid,current_location,email FROM user WHERE uid=me()");
+		$profile_rows=$facebook->api(array('method' => 'fql_query',
+				'query' => "SELECT uid,current_location,email " .
+											"FROM user WHERE uid=me()"));
 		} catch (FacebookRestClientException $e) {
 			if ($e->getCode() != 102 /* Requires user session */) {
 				ldiw_facebook_welcome_app_log_event('meetup');
@@ -1277,15 +1277,6 @@ function ldiw_facebook_welcome_app_admin_settings()
 						'ldiw_facebook_welcome_app_facebook_app_id',''),
 				'#size' => 15,
 				'#maxlength' => 15,
-				'#required' => TRUE,
-				),
-		'ldiw_facebook_welcome_app_facebook_api_key' => array(
-				'#type' => 'textfield',
-				'#title' => t('Facebook API Key'),
-				'#default_value' => variable_get(
-						'ldiw_facebook_welcome_app_facebook_api_key',''),
-				'#size' => 32,
-				'#maxlength' => 32,
 				'#required' => TRUE,
 				),
 		'ldiw_facebook_welcome_app_facebook_application_secret' => array(
